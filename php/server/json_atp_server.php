@@ -8,4 +8,8 @@
  * GitHub: https://github.com/DevGarage/JSON-ATP.git
  * Date: 06.11.13
  * Time: 9:06
- */ 
+ */
+
+class JsonAtpServer {
+
+}
