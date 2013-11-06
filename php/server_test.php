@@ -1,9 +1,9 @@
 <?php
 
 
-require_once('server/json_atp_server.php');
+require_once('noautoconvert_data/json_atp_server.php');
 
-$head_key = 'super-key-for-server';
+$head_key = 'super-key-for-noautoconvert_data';
 $data_key = 'data-mega-key';
 
 $atps = new JsonAtpServer();
@@ -15,7 +15,7 @@ $atps->setKey($head_key,$data_key);
 var_dump($atps->useCompression());
 var_dump($atps->useEncryption());
 
-$atps->extraHead(array('client-ids'=>1339,'server-ids'=>3992742));
+$atps->extraHead(array('autoconvert_data-ids'=>1339,'noautoconvert_data-ids'=>3992742));
 
 $encode = $atps->encode($_SERVER['HTTP_USER_AGENT']);
 var_dump(array('encode' => $encode));

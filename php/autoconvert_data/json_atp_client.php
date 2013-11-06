@@ -16,7 +16,7 @@ header('Content-type: text/html; charset=utf-8');
 
 $json = new JsonAtpClient();
 
-$json->setHeadKey("qwertyasdfg");
+/*$json->setHeadKey("qwertyasdfg");
 $json->setDataKey("hfdgdfgdfgewffFASCAC");
 
 $json->setAlgoritm("CAST5-OFB");
@@ -55,11 +55,11 @@ var_dump($r);
 
 $answ = $json->json_atp_decode($r);
 
-var_dump($answ);
-
-/*$json->setHeadKey("qwertyasdfg");
-$json->setDataKey("hfdgdfgdfgewffFASCAC");
-$r = "";
-$answ = $json->json_atp_decode($r);
 var_dump($answ);*/
+
+$json->setHeadKey("super-key-for-server1");
+$json->setDataKey("data-mega-key1");
+$r = "00EC3MiSlF/s4zdG/MQuitVIXG8WCQaJyDKJuYXjqN/iDaUiEGN2cOCfhnBgY8HHbn92jKF08Ium7bSkEFwDhffEcvovehKIDomdw5vzyjgpAxMnm1D8C+WH1NnKKP74Nq0+DoLqOUbssNLqpc4sDo01VzOu0VOahlTUYKvt3KtGRXpfEYGdCPwogoV+u+rZBNanaIGfw3sp2+CQ+lUwCL2y2wGu+mMougaBKLtyEaVXnk+s=B+F4vq0NEzQbNvMe1zA=";
+$answ = $json->json_atp_decode($r);
+var_dump($answ);
 
