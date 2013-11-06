@@ -5,11 +5,13 @@ require_once('server/json_atp_server.php');
 
 $atps = new JsonAtpServer();
 
-$atps->setCipher('aes-256-cbc');
+#$atps->setCipher('aes-256-cbc');
 
-$atps->setKey('hkey','dkey');
+$atps->setKey('123','456');
 
 var_dump($atps->useCompression());
 var_dump($atps->useEncryption());
 
-var_dump($atps->encode("SUPER SECRET CODE" . time()));
+var_dump($atps->encode('HELLO WORLD'));
+
+var_dump($atps);
