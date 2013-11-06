@@ -109,17 +109,23 @@ class JsonAtpClient {
 
 		## DECRYPT DATA AND HEAD IF NEED ##
 		if(self::_is_encrypt($flag)){
-			$head = self::_decrypt($head, $this->headKey, false);
-			$data = self::_decrypt($data, $this->dataKey);
+			$head = self::_decrypt($head, $this->headKey);
 		}
 
 		## DECOMPRESS DATA AND HEAD IF NEED ##
 		if(self::_is_compress($flag)){
 			$head = self::_decompress($head);
-			$data = self::_decompress($data);
 		}
 
 		$head = json_decode($head);
+
+		if(self::_is_encrypt($flag)){
+			$data = self::_decrypt($data, $this->dataKey, $head->chiper);
+		}
+
+		if(self::_is_compress($flag)){
+			$data = self::_decompress($data);
+		}
 
 		## CHECK SIGNATURE ##
 		if(self::_checkSig($head->signature, $data))
@@ -180,9 +186,9 @@ class JsonAtpClient {
 	}
 
 	## DECRYPT DATA $f_chip sets to false if decrypt needed to head##
-	private  function _decrypt($data, $key, $f_chip = true){
+	private  function _decrypt($data, $key, $f_chip = false){
 		if($f_chip)
-			$chiper = $this->chiper;
+			$chiper = $f_chip;
 		else
 			$chiper = self::OPENSSLDEFAULT;
 
