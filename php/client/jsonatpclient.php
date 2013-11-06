@@ -44,7 +44,6 @@ class JsonAtpClient {
 		if(!self::_checkKeys())
 			return false;
 
-
 		//flags check
 		if(self::_is_compress($flag))
 			$s_data = self::_compress($s_data);
@@ -106,6 +105,8 @@ class JsonAtpClient {
 
 		$head = base64_decode($head);
 		$data = base64_decode($data);
+
+
 
 		## DECRYPT DATA AND HEAD IF NEED ##
 		if(self::_is_encrypt($flag)){
@@ -226,8 +227,9 @@ class JsonAtpClient {
 	## SETS ENCRYPTION/DECRYPTION ALGORITM ##
 	public function setAlgoritm($chiper){
 		$avail_cipher = openssl_get_cipher_methods();
-		if(array_key_exists($chiper,$avail_cipher))
-			$this->chiper = $chiper;
+
+		if(in_array($chiper,$avail_cipher))
+		$this->chiper = $chiper;
 	}
 
 	## SETS COMPRESSION LEVEL ##
