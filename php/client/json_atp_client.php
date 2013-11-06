@@ -19,7 +19,10 @@ $json->setDataKey("dkey");
 
 $json->setAlgoritm("aes-256-cbc");
 
-$data = $_SERVER;
+$data = [
+	"first" => "ololo",
+	"second" => 'pewpew'
+];
 
 $r = $json->json_atp_encode($data);
 
