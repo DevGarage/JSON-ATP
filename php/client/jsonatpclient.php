@@ -30,8 +30,6 @@ class JsonAtpClient {
 	private $dataKey = null;
 
 
-
-
 	## ENCODE DATA ##
 	public function json_atp_encode($data, $flag = self::COMPRESS_ENCRYPT){
 		//Cheking income param if not string convert to string
