@@ -55,13 +55,19 @@ class JsonAtpClient {
 		$s_data = base64_encode($s_data);
 
 		// head prepare
-		$head = [
+		$head = array();
+		$head['id']         = "";
+		$head['r_id']       = uniqid();
+		$head['signature']  = hash("sha256", $data);
+		$head['time']       = microtime();
+		$head['size']       = strlen($s_data);
+		/*$head = [
 			"id"         => "",
 			"r_id"       => uniqid(),
 			"signature"  => hash("sha256", $data),
 			"time"       => microtime(),
 			"size"       => strlen($s_data)
-		];
+		];*/
 
 		$head = json_encode($head);
 
@@ -73,12 +79,13 @@ class JsonAtpClient {
 
 		$head = base64_encode($head);
 
-		$r = [
-			"head" => $head,
-			"data" => $s_data
-		];
+		$headlenght = strlen($head);
+		$headlenght = sprintf("%04X", $headlenght);
 
-		return base64_encode(json_encode($r));
+		$flag       = sprintf("%1X", $flag);
+
+
+		return $headlenght.$flag.$head.$s_data;
 	}
 
 	## SETS HEAD KEY ##
