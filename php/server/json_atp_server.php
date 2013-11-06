@@ -2,7 +2,6 @@
 /**
  * DevGar
  * Ukraine, Odessa
- * Created by PhpStorm.
  * User: Bubelich Nikolay
  * email: thesimj@gmail.com
  * GitHub: https://github.com/DevGarage/JSON-ATP.git
@@ -12,15 +11,15 @@
 
 class JsonAtpServer {
     const ATP_PROTOCOL      = 1;
-    const FLAG_COMPRESSION  = 1;
-    const FLAG_ENCRYPTION   = 2;
+    const FLAG_COMPRESSION  = 0x1;
+    const FLAG_ENCRYPTION   = 0x2;
 
     const DEFAULT_CIPHER            = 'aes-128-cbc';
     const DEFAULT_COMPRESSION_LEVEL = 6;
-    const DEFAULT_FLAG              = 3;
+    const DEFAULT_FLAG              = 0x3;
 
     protected $cipher               = self::DEFAULT_CIPHER;
-    protected $comression_level     = self::DEFAULT_COMPRESSION_LEVEL;
+    protected $compression_level     = self::DEFAULT_COMPRESSION_LEVEL;
     protected $head_length          = 0;
     protected $data_length          = 0;
     protected $flag                 = self::DEFAULT_FLAG;
@@ -45,6 +44,28 @@ class JsonAtpServer {
         if(strlen($data) < 2)
             return false;
 
+        ## Check encryption key ##
+        if(self::useEncryption() && ($this->data_key == null || $this->head_key == null))
+            return false;
+
+        ## Encode data ##
+        $data = self::encodeData($data);
+
+        ## Encode head ##
+        $phead = self::encodeHead();
+
+        var_dump(array('head' => $phead));
+        var_dump(array('data' => $data));
+
+        $result = $phead . $data;
+
+        var_dump(array('result' => $result));
+
+        ## DEFAULT RETURN FALSE ##
+        return $result;
+    }
+
+    private function encodeData($data){
         ## Prepare head ##
         $this->head = array();
 
@@ -64,23 +85,21 @@ class JsonAtpServer {
         if($data === false)
             return false;
 
+        ## Get data len ##
+        $this->data_length = strlen($data);
+
         ## Base64 ##
         $data = base64_encode($data);
 
-        ## get data len ##
-        $this->data_length = strlen($data);
-
-        ## DATA READY ##
-        $phead = self::prepareHead();
-
-        var_dump($this->head);
-
-        ## DEFAULT RETURN FALSE ##
         return $data;
     }
 
-    private function prepareHead(){
+    private function encodeHead(){
         ## CREATE HEAD ##
+
+        ## protocol version ##
+        $this->head['protocol'] = self::ATP_PROTOCOL;
+
         ## head request id ##
         $this->head['request'] = uniqid();
 
@@ -93,14 +112,45 @@ class JsonAtpServer {
         ## head data length ##
         $this->head['length'] = $this->data_length;
 
-        ## Convert to json ##
 
+        var_dump('-- HEAD --');
+
+        ## Convert to json ##
         $jhead = json_encode($this->head);
+        var_dump($jhead);
+
+        ## Perform compression if enabled ##
+        $jhead = self::compression($jhead);
+        if($jhead === false)
+            return false;
 
         var_dump($jhead);
 
-        ## Compress head ##
+        ## Perform encryption if enabled ##
+        $jhead = self::encryption($jhead,$this->head_key);
+        if($jhead === false)
+            return false;
+        var_dump($jhead);
 
+        ## Convert to Base64 ##
+        $jhead = base64_encode($jhead);
+        var_dump($jhead);
+
+        ## Get len ##
+        $this->head_length = strlen($jhead);
+
+        ## Prepare head len ##
+        $head_len   = sprintf("%04X",$this->head_length);
+
+        ## Prepare flag ##
+        $flag       = sprintf("%1X",$this->flag);
+
+        $this->head['__head_len']   = $head_len;
+        $this->head['__head_flag']  = $flag;
+
+        ## Return all head ##
+
+        return $head_len . $flag . $jhead;
     }
 
     private function encryption($data,$key){
@@ -118,7 +168,7 @@ class JsonAtpServer {
     private function compression($data){
 
         if(self::useCompression()){
-            $data = gzencode($data,$this->comression_level);
+            $data = gzencode($data,$this->compression_level);
         }
 
         return $data;
@@ -158,9 +208,9 @@ class JsonAtpServer {
     /**
      * @param int $level
      */
-    public function setComressionLevel($level)
+    public function setCompressionLevel($level)
     {
-        $this->comression_level = intval($level);
+        $this->compression_level = intval($level);
     }
 
 
