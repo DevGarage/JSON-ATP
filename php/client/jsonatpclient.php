@@ -19,10 +19,10 @@ class JsonAtpClient {
 	const COMPRESS_ENCRYPT  = 3;
 
 	## PARAMS ##
-	const COMPRESSIONDEF   = 6;
-	const OPENSSLDEFAULT = "AES-128-CBC";
+	const COMPRESSIONDEF    = 6;
+	const OPENSSLDEFAULT    = "AES-128-CBC";
 
-	private $chiper = self::OPENSSLDEFAULT;
+	private $chiper     = self::OPENSSLDEFAULT;
 	private $compession = self::COMPRESSIONDEF;
 
 	## KEYS ##
@@ -61,13 +61,6 @@ class JsonAtpClient {
 		$head['signature']  = hash("sha256", $data);
 		$head['time']       = microtime();
 		$head['size']       = strlen($s_data);
-		/*$head = [
-			"id"         => "",
-			"r_id"       => uniqid(),
-			"signature"  => hash("sha256", $data),
-			"time"       => microtime(),
-			"size"       => strlen($s_data)
-		];*/
 
 		$head = json_encode($head);
 
@@ -75,7 +68,7 @@ class JsonAtpClient {
 			$head = self::_compress($head);
 
 		if(self::_is_encrypt($flag))
-			$head = self::_encrypt($head, $this->headKey);
+			$head = self::_encrypt($head, $this->headKey, false);
 
 		$head = base64_encode($head);
 
@@ -86,6 +79,52 @@ class JsonAtpClient {
 
 
 		return $headlenght.$flag.$head.$s_data;
+	}
+
+	## DECODE DATA ##
+	public function  json_atp_decode($data){
+		if(!is_string($data) || strlen($data) < 2){
+			throw new Exception("Wrong Param in function ".__METHOD__, __LINE__);
+			return false;
+		}
+		//set default timezone
+		date_default_timezone_get("GMT+0");
+
+		//Check keys
+		if(!self::_checkKeys())
+			return false;
+
+		## GETTING SYSTEM INFORMATION( HEAD LENGTH, FLAG) ##
+		$system     = substr($data, 0, 5);
+		$headlenght = hexdec(substr($system, 0 , 4));
+		$flag       = hexdec(substr($system, -1));
+
+		## GETTING HEAD AND DATA PARTS ##
+		$head = substr($data, 5, $headlenght);
+		$data = substr($data, $headlenght+5);
+
+		$head = base64_decode($head);
+		$data = base64_decode($data);
+
+		## DECRYPT DATA AND HEAD IF NEED ##
+		if(self::_is_encrypt($flag)){
+			$head = self::_decrypt($head, $this->headKey, false);
+			$data = self::_decrypt($data, $this->dataKey);
+		}
+
+		## DECOMPRESS DATA AND HEAD IF NEED ##
+		if(self::_is_compress($flag)){
+			$head = self::_decompress($head);
+			$data = self::_decompress($data);
+		}
+
+		$head = json_decode($head);
+
+		## CHECK SIGNATURE ##
+		if(self::_checkSig($head->signature, $data))
+			return $data;
+
+		return false;
 	}
 
 	## SETS HEAD KEY ##
@@ -113,29 +152,42 @@ class JsonAtpClient {
 
 	}
 
-	## DECODE DATA ##
-	public static  function  json_atp_decode($data){
-
-	}
-
+	## COMPRESS DATA ##
 	private function _compress($data){
 		$data = gzcompress($data, $this->compession);
 		return $data;
 	}
 
 	## ENCRYPT DATA ##
-	private function _encrypt($data, $key){
-		$ivlen  = openssl_cipher_iv_length($this->chiper);
+	private function _encrypt($data, $key, $f_chip = true){
+		if($f_chip)
+			$chiper = $this->chiper;
+		else
+			$chiper = self::OPENSSLDEFAULT;
+
+		$ivlen  = openssl_cipher_iv_length($chiper);
 		$iv     = substr(hash('sha256',$key),0,$ivlen);
-		$data   = openssl_encrypt($data,$this->chiper,$key,true,$iv);
+		$data   = openssl_encrypt($data,$chiper,$key,true,$iv);
+
+		return $data;
+	}
+
+	## DECOMPRESS DATA ##
+	private function _decompress($data){
+		$data = gzuncompress($data);
 		return $data;
 	}
 
 	## DECRYPT DATA ##
-	private  function _decrypt($data, $key){
-		$ivlen  = openssl_cipher_iv_length($this->chiper);
+	private  function _decrypt($data, $key, $f_chip = true){
+		if($f_chip)
+			$chiper = $this->chiper;
+		else
+			$chiper = self::OPENSSLDEFAULT;
+
+		$ivlen  = openssl_cipher_iv_length($chiper);
 		$iv     = substr(hash('sha256',$key),0,$ivlen);
-		$data   = openssl_decrypt($data,$this->chiper,$key,true,$iv);
+		$data   = openssl_decrypt($data,$chiper,$key,true,$iv);
 		return $data;
 	}
 
@@ -148,12 +200,15 @@ class JsonAtpClient {
 		return true;
 	}
 
+	## CHECK NEEDLE OF COMPRESSION ##
 	private function _is_compress($flag){
 		if($flag === self::COMPRESSION || $flag === self::COMPRESS_ENCRYPT)
 			return true;
 		else
 			return false;
 	}
+
+	## CHECK NEEDLE OF ENCRYPTING ##
 	private function _is_encrypt($flag){
 		if($flag === self::ENCRYPTION || $flag === self::COMPRESS_ENCRYPT)
 			return true;
@@ -161,14 +216,26 @@ class JsonAtpClient {
 			return false;
 	}
 
+	## SETS ENCRYPTION/DECRYPTION ALGORITM ##
 	public function setAlgoritm($chiper){
 		$avail_cipher = openssl_get_cipher_methods();
 		if(array_key_exists($chiper,$avail_cipher))
 			$this->chiper = $chiper;
 	}
 
+	## SETS COMPRESSION LEVEL ##
 	public function setCompression($compression){
 		$this->compession = intval($compression);
+	}
+
+	## CHECK SIGNATURE ##
+	private function _checkSig($sig, $data){
+		$data = hash("sha256", $data);
+		if(strcmp($sig, $data) === 0)
+			return true;
+		else
+			throw new Exception("Wrong signature", __LINE__);
+		return false;
 	}
 
 } 

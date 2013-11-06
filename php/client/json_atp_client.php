@@ -19,9 +19,14 @@ $json->setDataKey("dkey");
 
 $json->setAlgoritm("aes-256-cbc");
 
-$data = "Hello World";
+$data = $_SERVER;
 
 $r = $json->json_atp_encode($data);
 
 var_dump($r);
+
+$answ = $json->json_atp_decode($r);
+
+var_dump(json_decode($answ));
+
 
