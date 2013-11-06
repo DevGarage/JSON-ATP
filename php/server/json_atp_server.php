@@ -54,7 +54,6 @@ class JsonAtpServer {
         $this->flag         = hexdec(substr($data,4,1));
 
         $this->head = substr($data,5,$this->head_length);
-        var_dump(array('head' => $this->head));
 
         $this->head = self::decodeHead($this->head);
 
@@ -66,8 +65,6 @@ class JsonAtpServer {
 
         if($data === false)
             return false;
-
-        var_dump(array('data' => $data));
 
         return self::decodeData($data);
     }
@@ -91,12 +88,7 @@ class JsonAtpServer {
         ## Encode head ##
         $phead = self::encodeHead();
 
-        var_dump(array('head' => $phead));
-        var_dump(array('data' => $data));
-
         $result = $phead . $data;
-
-        var_dump(array('result' => $result));
 
         ## DEFAULT RETURN FALSE ##
         return $result;
@@ -114,14 +106,10 @@ class JsonAtpServer {
         if($head === false)
             return false;
 
-        var_dump(array('decrypt' => $head));
-
         ## Uncompressed if enabled ##
         $head = self::uncompress($head);
         if($head === false)
             return false;
-
-        var_dump(array('uncompress' => $head));
 
         ## Json decode to array ##
         $head = json_decode($head,true);
@@ -141,28 +129,20 @@ class JsonAtpServer {
     }
 
     private function decodeData($data){
-        var_dump(array('-- DATA DECODE --' => $data));
-
         ## Base64 decode ##
         $data = base64_decode($data);
         if($data === false)
             return false;
-
-        var_dump(array('base64' => $data));
 
         ## Decrypt if enabled ##
         $data = self::decrypt($data,$this->data_key,$this->cipher);
         if($data === false)
             return false;
 
-        var_dump(array('decrypt' => $data));
-
         ## Uncompresse if enabled ##
         $data = self::uncompress($data);
         if($data === false)
             return false;
-
-        var_dump(array('uncompress' => $data));
 
         ## Test signatrue ##
         if(strcmp(hash('sha256',$data),$this->data_signature) != 0)
@@ -219,28 +199,21 @@ class JsonAtpServer {
         if($this->cipher !== self::DEFAULT_CIPHER)
             $this->head['cipher'] = $this->cipher;
 
-        var_dump('-- HEAD --');
-
         ## Convert to json ##
         $jhead = json_encode($this->head);
-        var_dump($jhead);
 
         ## Perform compress if enabled ##
         $jhead = self::compress($jhead);
         if($jhead === false)
             return false;
 
-        var_dump($jhead);
-
         ## Perform encrypt if enabled ##
         $jhead = self::encrypt($jhead,$this->head_key);
         if($jhead === false)
             return false;
-        var_dump($jhead);
 
         ## Convert to Base64 ##
         $jhead = base64_encode($jhead);
-        var_dump($jhead);
 
         ## Get len ##
         $this->head_length = strlen($jhead);
