@@ -25,7 +25,7 @@ class JsonAtpServer {
     protected $data_length          = 0;
     protected $flag                 = self::DEFAULT_FLAG;
 
-    protected $head                 = null;
+    protected $head                 = array();
     protected $data_signature       = null;
 
     private $data_key               = null;
@@ -131,8 +131,11 @@ class JsonAtpServer {
 
         ## FIND SOME INFO ##
         ## GET CIPHER IF EXIST ##
-        if(isset($this->head['cipher']))
-            self::setCipher($this->head['cipher']);
+        if(isset($head['cipher']))
+            self::setCipher($head['cipher']);
+
+        ## Set data signature ##
+        $this->data_signature = $head['signature'];
 
         return $head;
     }
@@ -161,14 +164,14 @@ class JsonAtpServer {
 
         var_dump(array('uncompress' => $data));
 
+        ## Test signatrue ##
+        if(strcmp(hash('sha256',$data),$this->data_signature) != 0)
+            return false;
 
-        return true;
+        return $data;
     }
 
     private function encodeData($data){
-        ## Prepare head ##
-        $this->head = array();
-
         ## Get data signature ##
         $this->data_signature   = hash('sha256',$data);
 
@@ -296,6 +299,14 @@ class JsonAtpServer {
         return ($this->flag & self::FLAG_ENCRYPTION) > 0 ? true : false;
     }
 
+
+    public function extraHead($extra){
+        if(is_array($extra)){
+            foreach($extra as $key=>$val)
+                if(isset($this->head[$key]) == false)
+                    $this->head[$key] = $val;
+        }
+    }
 
     /**
      * Return Header information
