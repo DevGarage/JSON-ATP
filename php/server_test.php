@@ -12,4 +12,4 @@ $atps->setKey('hkey','dkey');
 var_dump($atps->useCompression());
 var_dump($atps->useEncryption());
 
-var_dump($atps->encode("SUPER SECRET CODE" . time()));
+var_dump($atps->encode("Hello World"));
