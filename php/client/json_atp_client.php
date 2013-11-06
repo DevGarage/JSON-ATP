@@ -23,6 +23,8 @@ $data = $_SERVER;
 
 $r = $json->json_atp_encode($data);
 
+file_put_contents("request", $r);
+
 var_dump($r);
 
 $answ = $json->json_atp_decode($r);
