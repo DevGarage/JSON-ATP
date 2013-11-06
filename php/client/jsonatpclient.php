@@ -158,7 +158,7 @@ class JsonAtpClient {
 		return $data;
 	}
 
-	## ENCRYPT DATA ##
+	## ENCRYPT DATA $f_chip sets to false if encrypt needed to head##
 	private function _encrypt($data, $key, $f_chip = true){
 		if($f_chip)
 			$chiper = $this->chiper;
@@ -178,7 +178,7 @@ class JsonAtpClient {
 		return $data;
 	}
 
-	## DECRYPT DATA ##
+	## DECRYPT DATA $f_chip sets to false if decrypt needed to head##
 	private  function _decrypt($data, $key, $f_chip = true){
 		if($f_chip)
 			$chiper = $this->chiper;
