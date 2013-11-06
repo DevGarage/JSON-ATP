@@ -17,7 +17,7 @@ $json = new JsonAtpClient();
 $json->setHeadKey("hkey");
 $json->setDataKey("dkey");
 
-$json->setAlgoritm("aes-256-cbc");
+$json->setAlgoritm("AES-256-CBC");
 
 $data = [
 	"first" => "ololo",

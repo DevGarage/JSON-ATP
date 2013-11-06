@@ -61,6 +61,7 @@ class JsonAtpClient {
 		$head['signature']  = hash("sha256", $data);
 		$head['time']       = microtime();
 		$head['size']       = strlen($s_data);
+		$head['chiper']     = $this->chiper;
 
 		$head = json_encode($head);
 
