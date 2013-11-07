@@ -1,7 +1,7 @@
 <?php
 
 
-require_once('server/json_atp_server.php');
+require_once('json_atp.php');
 
 $head_key = 'super-key-for-server1';
 $data_key = 'data-mega-key1';
