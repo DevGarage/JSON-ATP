@@ -1,5 +1,11 @@
 PHP JSON-ATP
 ========
-This repository is the implementation of JSON-ATP for PHP.
-The application is divided into two parts, a client and a server, which stores the handlers for the server and client.
+Этот репозиторий предназначен для хранения версии реализованной на языке PHP.
+  Существует две версии проекта:
+  - autoconvert_data;
+  - noautoconvert_data.
+  
+autoconvert_data – Передаваться может как строка данных, так и JSON  массив данных.
+
+noautoconvert_data – Передаваться может только JSON  массив данных.
 
