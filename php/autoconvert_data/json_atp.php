@@ -21,9 +21,13 @@ class JsonAtpClient {
 	## PARAMS ##
 	const COMPRESSIONDEF    = 6;
 	const OPENSSLDEFAULT    = "AES-128-CBC";
+	const DEFAULTUSERID     = "";
+	const DEFAULTREQUESTID  = "";
 
-	private $chiper     = self::OPENSSLDEFAULT;
-	private $compession = self::COMPRESSIONDEF;
+	private $chiper         = self::OPENSSLDEFAULT;
+	private $compession     = self::COMPRESSIONDEF;
+	private $headuserid     = self::DEFAULTUSERID;
+	private $headrequestid  = self::DEFAULTREQUESTID;
 
 	## KEYS ##
 	private $headKey = null;
@@ -55,8 +59,8 @@ class JsonAtpClient {
 
 		// head prepare
 		$head = array();
-		$head['id']         = "";
-		$head['r_id']       = uniqid();
+		$head['id']         = $this->headuserid;
+		$head['r_id']       = $this->headrequestid;
 		$head['signature']  = hash("sha256", $data);
 		$head['time']       = microtime();
 		$head['size']       = strlen($s_data);
@@ -82,11 +86,13 @@ class JsonAtpClient {
 	}
 
 	## DECODE DATA ##
-	public function  json_atp_decode($data){
+	public function  json_atp_decode($data, $keys = null){
 		if(!is_string($data) || strlen($data) < 2){
 			throw new Exception("Wrong Param in function ".__METHOD__, __LINE__);
 			return false;
 		}
+
+
 		//set default timezone
 		date_default_timezone_get("GMT+0");
 
@@ -119,6 +125,15 @@ class JsonAtpClient {
 		}
 
 		$head = json_decode($head);
+
+		if($keys !== null){
+			if(array_key_exists($head->id, $keys))
+				$this->dataKey = $keys[$head->id];
+			else{
+				throw new Exception("No data key fin in array", __LINE__);
+				return false;
+			}
+		}
 
 
 		if(self::_is_encrypt($flag)){
@@ -246,6 +261,14 @@ class JsonAtpClient {
 		else
 			throw new Exception("Wrong signature", __LINE__);
 		return false;
+	}
+
+	public function setHeadUsrId($uuid){
+		$this->headuserid = $uuid;
+	}
+
+	public function setHeadReqId($uuid){
+		$this->headrequestid = $uuid;
 	}
 
 } 

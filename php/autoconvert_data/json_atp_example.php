@@ -22,13 +22,24 @@ $json->setDataKey("hfdgdfgdfgewffFASCAC");
 $json->setAlgoritm("aes-256-cbc");
 $json->setCompression(6);
 
-$data = openssl_get_cipher_methods();
+$json->setHeadUsrId("qwerty");
+$json->setHeadReqId(uniqid());
+
+$arr = [
+	"qwerty" => "hfdgdfgdfgewffFASCAC",
+	"asdasdas" => "asdasdas"
+];
+
+$data = "123";
+
 
 $r = $json->json_atp_encode($data);
 
 var_dump($r);
 
-$answ = $json->json_atp_decode($r);
+$answ = $json->json_atp_decode($r, $arr);
 
 var_dump($answ);
+
+var_dump(json_decode($answ));
 
