@@ -6,5 +6,6 @@ PHP JSON-ATP
   - noautoconvert_data.
   
 autoconvert_data – Передаваться может как строка данных, так и JSON  массив данных.
+
 noautoconvert_data – Передаваться может только JSON  массив данных.
 
