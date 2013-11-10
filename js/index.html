@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Json ATP Test page</title>
+
+    <script src="lib/core-min.js" type="text/javascript"></script>
+    <script src="lib/enc-base64-min.js" type="text/javascript"></script>
+    <script src="lib/sha256.js" type="text/javascript"></script>
+    <script src="lib/aes.js" type="text/javascript"></script>
+    <script src="json_atp.js" type="text/javascript"></script>
+
+</head>
+<body>
+
+<script>
+    var hash = CryptoJS.SHA256("Message");
+    alert(JsonAtp.sha256('sfsdfdsf'));
+
+    var encrypted = CryptoJS.AES.encrypt("SuperPuperText", "Secret Passphrase");
+    var decrypted = CryptoJS.AES.decrypt(encrypted, "Secret Passphrase");
+
+    //alert(JsonAtp.ATT);
+
+    alert(encrypted);
+    alert(decrypted.toString(CryptoJS.enc.Utf8));
+
+</script>
+</body>
+</html>
