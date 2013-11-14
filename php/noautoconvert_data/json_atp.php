@@ -5,11 +5,10 @@
  * User: Bubelich Nikolay
  * email: thesimj@gmail.com
  * GitHub: https://github.com/DevGarage/JSON-ATP.git
- * Date: 06.11.13
- * Time: 9:06
+ * Date: 14.11.13
  */
 
-class JsonAtpServer {
+class JsonAtp {
     const ATP_PROTOCOL      = 1;
     const FLAG_CLEAR_TEXT   = 0x0;
     const FLAG_COMPRESSION  = 0x1;
