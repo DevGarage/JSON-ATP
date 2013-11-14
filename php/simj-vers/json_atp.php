@@ -9,7 +9,7 @@
  */
 
 class JsonAtp {
-    const ATP_PROTOCOL      = 1;
+    const ATP_PROTOCOL      = 2;
     const FLAG_CLEAR_TEXT   = 0x0;
     const FLAG_COMPRESSION  = 0x1;
     const FLAG_ENCRYPTION   = 0x2;
@@ -29,10 +29,10 @@ class JsonAtp {
 
     private $data_key               = null;
     private $head_key               = null;
-//    private $id                     = 0;
 
-    public function __construct($head_key = null){
-        $this->head_key = $head_key;
+    public function __construct($head_key = null, $data_key = null, $flag = self::DEFAULT_FLAG){
+        self::setKey($head_key,$data_key);
+        self::setFlag($flag);
     }
 
     public function decode($data){
@@ -69,6 +69,10 @@ class JsonAtp {
     }
 
     public function encode($data){
+
+        ## Check keys ##
+        if(!is_string($this->head_key)|| !is_string($this->data_key))
+            return false;
 
         ## Check data ##
         if(is_string($data) == false)
@@ -121,6 +125,10 @@ class JsonAtp {
         if(isset($head['cipher']))
             self::setCipher($head['cipher']);
 
+        ## Protocol version match ##
+        if(!isset($head['protocol']) && intval($head['protocol']) != self::ATP_PROTOCOL)
+            return false;
+
         ## Set data signature ##
         $this->data_signature = $head['signature'];
 
@@ -144,15 +152,17 @@ class JsonAtp {
             return false;
 
         ## Test signatrue ##
-        if(strcmp(hash('sha256',$data),$this->data_signature) != 0)
+        $signature = base64_encode(hex2bin(hash('sha256',$this->head_key . $data . $this->data_key)));
+        if(strcmp($signature,$this->data_signature) != 0)
             return false;
 
         return $data;
     }
 
     private function encodeData($data){
+
         ## Get data signature ##
-        $this->data_signature   = hash('sha256',$data);
+        $this->data_signature   = base64_encode(hex2bin(hash('sha256', $this->head_key . $data . $this->data_key)));
 
         ## PREPARE DATA ##
         ## Compress data ##
