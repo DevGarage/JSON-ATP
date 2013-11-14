@@ -6,6 +6,8 @@
  * email: thesimj@gmail.com
  * GitHub: https://github.com/DevGarage/JSON-ATP.git
  * Date: 14.11.13
+ *
+ * VERSION 2.14
  */
 
 class JsonAtp {
@@ -30,9 +32,13 @@ class JsonAtp {
     private $data_key               = null;
     private $head_key               = null;
 
-    public function __construct($head_key = null, $data_key = null, $flag = self::DEFAULT_FLAG){
+    /** @var string Used for identity clients  */
+    private $token                  = null;
+
+    public function __construct($head_key = null, $token = null, $data_key = null, $flag = self::DEFAULT_FLAG){
         self::setKey($head_key,$data_key);
         self::setFlag($flag);
+        self::setToken($token);
     }
 
     public function decode($data){
@@ -125,6 +131,10 @@ class JsonAtp {
         if(isset($head['cipher']))
             self::setCipher($head['cipher']);
 
+        ## Token ##
+        if(isset($head['token']))
+            self::setToken($head['token']);
+
         ## Protocol version match ##
         if(!isset($head['protocol']) && intval($head['protocol']) != self::ATP_PROTOCOL)
             return false;
@@ -192,8 +202,9 @@ class JsonAtp {
         ## protocol version ##
         $this->head['protocol'] = self::ATP_PROTOCOL;
 
-        ## head request id ##
-        $this->head['request'] = uniqid();
+        ## Token, use to identify client ##
+        if($this->token !== null)
+            $this->head['token']    = $this->token;
 
         ## head time stamp ##
         $this->head['time'] = time();
@@ -288,6 +299,43 @@ class JsonAtp {
                 if(isset($this->head[$key]) == false)
                     $this->head[$key] = $val;
         }
+    }
+
+    public function parseHead($data){
+        if(is_string($data)){
+            ## Check data ##
+            if(is_string($data) == false)
+                return false;
+
+            if(strlen($data) < 2)
+                return false;
+
+            ## Check encrypt key ##
+            if(self::useEncryption() && ($this->head_key == null))
+                return false;
+
+            ## Get header ##
+            ## Header length ##
+            $this->head_length  = hexdec(substr($data,0,4));
+            $this->flag         = hexdec(substr($data,4,1));
+
+            $this->head = substr($data,5,$this->head_length);
+
+            $this->head = self::decodeHead($this->head);
+
+            if($this->head === false)
+                return false;
+        }
+
+        return true;
+    }
+
+    public function getToken(){
+        return $this->token;
+    }
+
+    public function setToken($token){
+        $this->token = $token;
     }
 
     /**
