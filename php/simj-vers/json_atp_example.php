@@ -14,7 +14,7 @@ $data = 'Super Secret Message';
 
 //$jsonatp->addExtra();
 
-$edata = $jsonatp->encode(null);
+$edata = $jsonatp->encode($data);
 var_dump($jsonatp);
 var_dump($edata);
 

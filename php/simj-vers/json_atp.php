@@ -26,7 +26,7 @@ class JsonAtp {
 
     const DEFAULT_CIPHER            = 'aes-128-cbc';
     const DEFAULT_COMPRESSION_LEVEL = 6;
-    const DEFAULT_FLAG              = 0x3;
+    const DEFAULT_FLAG              = 0x0;
 
     /** int, Current timestamp in GMT+0 */
     const HEAD_FIELD_TIME       = '__t';
@@ -101,27 +101,6 @@ class JsonAtp {
         return self::decodeData($data);
     }
 
-    public function encode($data, $extra = null){
-
-        ## Data check ##
-        if(is_string($data) == false && strlen($data) <= 2)
-            return false;
-
-        ## Add extra fields to head ##
-        self::addExtra($extra);
-
-        ## Encode data ##
-        $data = self::encodeData($data);
-
-        ## Encode head ##
-        $phead = self::encodeHead();
-
-        $result = $phead . $data;
-
-        ## DEFAULT RETURN FALSE ##
-        return $result;
-    }
-
     private function decodeHead($head){
         ## Base64 decode ##
         $head = base64_decode($head);
@@ -186,6 +165,41 @@ class JsonAtp {
             return false;
 
         return $data;
+    }
+
+    public function encode($data, $extra = null){
+
+        ## Data check ##
+        if(is_string($data) == false && strlen($data) <= 2)
+            return false;
+
+        ## Add extra fields to head ##
+        self::addExtra($extra);
+
+        ## Encode data ##
+        $data = self::encodeData($data);
+
+        ## Encode head ##
+        $phead = self::encodeHead();
+
+        ## Prepare head len ##
+        $head_len   = sprintf("%04X",$this->head_length);
+
+        ## Prepare flag ##
+        $flag       = sprintf("%1X",$this->flag);
+
+        ## Get full signature for all message ##
+        $hk = ($this->head_key == null) ? '' : $this->head_key;
+        $dk = ($this->data_key == null) ? '' : $this->data_key;
+
+        ## Full signature = SHA256 ( HeadKey + HeadSignature + DataKey + DataSignature )
+        $this->full_signature = self::hash($hk . $this->head_signature . $dk . $this->data_signature );
+
+        ## Result -> Signature + HeadLen + Flag + Head + Data
+        $result = $this->full_signature . $head_len . $flag . $phead . $data;
+
+        ## DEFAULT RETURN FALSE ##
+        return $result;
     }
 
     private function encodeData($data){
@@ -256,21 +270,8 @@ class JsonAtp {
         ## Get len ##
         $this->head_length = strlen($jhead);
 
-        ## Prepare head len ##
-        $head_len   = sprintf("%04X",$this->head_length);
-
-        ## Prepare flag ##
-        $flag       = sprintf("%1X",$this->flag);
-
-        ## Get full signature for all message ##
-        $hk = ($this->head_key == null) ? '' : $this->head_key;
-        $dk = ($this->data_key == null) ? '' : $this->data_key;
-
-        ## Full signature = SHA256 ( HeadKey + HeadSignature + DataKey + DataSignature )
-        $this->full_signature = self::hash($hk . $this->head_signature . $dk . $this->data_signature );
-
         ## Return head ##
-        return $head_len . $flag . $this->full_signature . $jhead;
+        return $jhead;
     }
 
     private function encrypt($data,$key,$cipher = self::DEFAULT_CIPHER){
