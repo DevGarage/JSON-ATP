@@ -25,8 +25,10 @@ var_dump($encode);
 var_dump($edata);
 
 
-## Create Decode instance, Without token (for Server)
+## Create Decode instance, Without token (for Server) ##
 $decode = new JsonAtp(null,$head_key);
+
+## Decode only head, and get client token ##
 $client_token = $decode->decode($edata,true);
 
 ## Show client token ##
@@ -38,6 +40,9 @@ $decode->setDataKey($client_key);
 
 ## Decode message ##
 $message = $decode->decode($edata);
+
+## Show decoder status ##
+var_dump($decode);
 
 ## Show message ##
 var_dump($message);

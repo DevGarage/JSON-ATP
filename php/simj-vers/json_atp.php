@@ -6,7 +6,12 @@
  * email: thesimj@gmail.com
  * GitHub: https://github.com/DevGarage/JSON-ATP.git
  * Date: 15.11.13
- * VERSION 2.16
+ * VERSION 3.16
+ *
+ *
+ * =========================================
+ * Apache License, Version 2.0, January 2004
+ * http://www.apache.org/licenses/
  */
 
 class JsonAtp {
@@ -18,15 +23,15 @@ class JsonAtp {
 
     const DEFAULT_CIPHER            = 'aes-128-cbc';
     const DEFAULT_COMPRESSION_LEVEL = 6;
-    const DEFAULT_FLAG              = 0x3;
+    const DEFAULT_FLAG              = 0x0;
 
-    /** int, Current timestamp in GMT+0 */
+    /** int, Current time measured in the number of seconds since the Unix Epoch (January 1 1970 00:00:00 GMT)*/
     const HEAD_FIELD_TIME       = '_t';
 
     /** string, Client (server) token identity */
     const HEAD_FIELD_TOKEN      = '_i';
 
-    /** string, Cipher, default AES-128-CBC */
+    /** string, Cipher type, default AES-128-CBC */
     const HEAD_FIELD_CIPHER     = '_c';
 
     /** int, Protocol version */
@@ -39,7 +44,7 @@ class JsonAtp {
     const HEAD_FIELD_LENGTH     = '_l';
 
     /** HASH CONST **/
-    const HASH_LENGTH           = 44;
+    const HASH_LENGTH           = 64;
     const HASH_ALGORITHM        = 'sha256';
 
     protected $cipher               = self::DEFAULT_CIPHER;
@@ -292,7 +297,7 @@ class JsonAtp {
             $ivlen  = openssl_cipher_iv_length($this->cipher);
             $iv     = substr(hash('sha256',$key),0,$ivlen);
 
-            return openssl_encrypt($data,$cipher,$key,true,$iv);
+            return @openssl_encrypt($data,$cipher,$key,true,$iv);
         }
         else
             return $data;
@@ -303,7 +308,7 @@ class JsonAtp {
             $ivlen  = openssl_cipher_iv_length($cipher);
             $iv     = substr(hash('sha256',$key),0,$ivlen);
 
-            return openssl_decrypt($data,$cipher,$key,true,$iv);
+            return @openssl_decrypt($data,$cipher,$key,true,$iv);
         }
         else
             return $data;
@@ -311,14 +316,14 @@ class JsonAtp {
 
     private function compress($data){
         if(self::useCompression())
-            return gzcompress($data,$this->compression_level);
+            return @gzcompress($data,$this->compression_level);
         else
             return $data;
     }
 
     private function uncompress($data){
         if(self::useCompression())
-            return gzuncompress($data);
+            return @gzuncompress($data);
         else
             return $data;
     }
@@ -420,7 +425,8 @@ class JsonAtp {
 
     private function hash($data){
         if(is_string($data) && strlen($data)>1){
-            return base64_encode(hex2bin(hash(self::HASH_ALGORITHM, $data)));
+//            return base64_encode(hex2bin(hash(self::HASH_ALGORITHM, $data)));
+            return hash(self::HASH_ALGORITHM, $data);
         }
 
         return false;
