@@ -23,7 +23,7 @@ class JsonAtp {
 
     const DEFAULT_CIPHER            = 'aes-128-cbc';
     const DEFAULT_COMPRESSION_LEVEL = 6;
-    const DEFAULT_FLAG              = 0x0;
+    const DEFAULT_FLAG              = 0x3;
 
     /** int, Current time measured in the number of seconds since the Unix Epoch (January 1 1970 00:00:00 GMT)*/
     const HEAD_FIELD_TIME       = '_t';
