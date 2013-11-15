@@ -70,6 +70,13 @@ class JsonAtp {
         self::setKey($head_key,$data_key);
     }
 
+    /**
+     * Decode string and return message.
+     *
+     * @param string $data Encoded string
+     * @param bool $tokenOnly Use to get from header only client token
+     * @return string|bool Return decoded message. On fail - return FALSE
+     */
     public function decode($data, $tokenOnly = false){
 
         ## Data check ##
@@ -183,6 +190,13 @@ class JsonAtp {
         return $data;
     }
 
+    /**
+     * Encode data sting to JSON-ATP string message
+     *
+     * @param string $data Data string message.
+     * @param array|null $extra Extra fields to adds in header.
+     * @return string|bool Return encoded message. On fail - return FALSE
+     */
     public function encode($data, $extra = null){
 
         ## Data check ##
@@ -335,6 +349,12 @@ class JsonAtp {
         return ($this->flag & self::FLAG_ENCRYPTION) > 0 ? true : false;
     }
 
+
+    /**
+     * Get array of extra fields from header.
+     *
+     * @return array|bool Return array of extra fields in header. If no extra fields - return FALSE.
+     */
     public function getExtra(){
         $_ARR = false;
 
@@ -348,7 +368,7 @@ class JsonAtp {
         return $_ARR;
     }
 
-    public function addExtra($extra){
+    protected function addExtra($extra){
         if(is_array($extra)){
 
             foreach($extra as $key => $val)
