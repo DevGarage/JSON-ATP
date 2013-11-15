@@ -6,13 +6,15 @@ require_once('json_atp.php');
 $head_key = 'super-key-for-server1';
 $data_key = 'data-mega-key1';
 
-$jsonatp = new JsonAtp($head_key, 'user-1', $data_key);
+$jsonatp = new JsonAtp('user-1','super');
 
 var_dump($jsonatp);
 
 $data = 'Super Secret Message';
 
-$edata = $jsonatp->encode($data);
+//$jsonatp->addExtra();
+
+$edata = $jsonatp->encode(null);
 var_dump($jsonatp);
 var_dump($edata);
 
