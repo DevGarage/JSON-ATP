@@ -2,12 +2,11 @@
 /**
  * DevGar
  * Ukraine, Odessa
- * User: Bubelich Nikolay
- * email: thesimj@gmail.com
- * GitHub: https://github.com/DevGarage/JSON-ATP.git
+ * Author: Bubelich Nikolay
+ * Email: thesimj@gmail.com
+ * GitHub: https://github.com/DevGarage/JSON-ATP
  * Date: 15.11.13
  * VERSION 3.16
- *
  *
  * =========================================
  * Apache License, Version 2.0, January 2004
