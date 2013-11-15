@@ -5,17 +5,8 @@
  * User: Bubelich Nikolay
  * email: thesimj@gmail.com
  * GitHub: https://github.com/DevGarage/JSON-ATP.git
- * Date: 14.11.13
- *
- * VERSION 2.15
- *
- * Head fields, v3
- * __t  =
- * __i  = string,   Client (server) token identity
- * __c  = string,   Cipher, default AES-128-CBC
- * __p  = int,      Protocol version
- * __s  = string,   Signature (sha256) for head and data (if available)
- *
+ * Date: 15.11.13
+ * VERSION 2.16
  */
 
 class JsonAtp {
@@ -26,23 +17,29 @@ class JsonAtp {
 
     const DEFAULT_CIPHER            = 'aes-128-cbc';
     const DEFAULT_COMPRESSION_LEVEL = 6;
-    const DEFAULT_FLAG              = 0x0;
+    const DEFAULT_FLAG              = 0x3;
 
     /** int, Current timestamp in GMT+0 */
-    const HEAD_FIELD_TIME       = '__t';
-    /** string, Client (server) token identity */
-    const HEAD_FIELD_TOKEN      = '__i';
-    /** string, Cipher, default AES-128-CBC */
-    const HEAD_FIELD_CIPHER     = '__c';
-    /** int, Protocol version */
-    const HEAD_FIELD_PROTOCOL   = '__p';
-    /** string, Signature (sha256) for head and data (if available) */
-    const HEAD_FIELD_SIGNATURE  = '__s';
-    /** int, Length of Data (if available) */
-    const HEAD_FIELD_LENGTH     = '__l';
+    const HEAD_FIELD_TIME       = '_t';
 
-    /** LEN OF HASH */
+    /** string, Client (server) token identity */
+    const HEAD_FIELD_TOKEN      = '_i';
+
+    /** string, Cipher, default AES-128-CBC */
+    const HEAD_FIELD_CIPHER     = '_c';
+
+    /** int, Protocol version */
+    const HEAD_FIELD_PROTOCOL   = '_p';
+
+    /** string, Signature (sha256) for head and data (if available) */
+    const HEAD_FIELD_SIGNATURE  = '_s';
+
+    /** int, Length of Data (if available) */
+    const HEAD_FIELD_LENGTH     = '_l';
+
+    /** HASH CONST **/
     const HASH_LENGTH           = 44;
+    const HASH_ALGORITHM        = 'sha256';
 
     protected $cipher               = self::DEFAULT_CIPHER;
     protected $compression_level    = self::DEFAULT_COMPRESSION_LEVEL;
@@ -63,42 +60,57 @@ class JsonAtp {
     private $token                  = null;
 
     public function __construct($token = null, $head_key = null, $data_key = null, $flag = self::DEFAULT_FLAG){
-        self::setKey($head_key,$data_key);
-        self::setFlag($flag);
         self::setToken($token);
+        self::setFlag($flag);
+        self::setKey($head_key,$data_key);
     }
 
-    public function decode($data){
-        ## Check data ##
-        if(is_string($data) == false)
+    public function decode($data, $tokenOnly = false){
+
+        ## Data check ##
+        if(is_string($data) == false || strlen($data) <= 2)
             return false;
 
-        if(strlen($data) < 2)
-            return false;
+        ## HEADER ##
+        ## Get full signature ##
+        $this->full_signature = substr($data,0,self::HASH_LENGTH);
 
-        ## Check encrypt key ##
-        if(self::useEncryption() && ($this->data_key == null || $this->head_key == null))
-            return false;
-
-        ## Get header ##
         ## Header length ##
-        $this->head_length  = hexdec(substr($data,0,4));
-        $this->flag         = hexdec(substr($data,4,1));
+        $this->head_length  = hexdec(substr($data,self::HASH_LENGTH + 0,4));
+        $this->flag         = hexdec(substr($data,self::HASH_LENGTH + 4,1));
 
-        $this->head = substr($data,5,$this->head_length);
+        $this->head = substr($data,self::HASH_LENGTH + 5,$this->head_length);
 
         $this->head = self::decodeHead($this->head);
 
         if($this->head === false)
             return false;
 
+        if($tokenOnly)
+            return self::getToken();
+
         ## Get data ##
-        $data = substr($data,$this->head_length + 5);
+        $data = substr($data,$this->head_length + self::HASH_LENGTH + 5);
 
         if($data === false)
             return false;
 
-        return self::decodeData($data);
+        $data = self::decodeData($data);
+
+        if($data == false)
+            return false;
+
+        ## Get full signature for all message ##
+        $hk = ($this->head_key == null) ? '' : $this->head_key;
+        $dk = ($this->data_key == null) ? '' : $this->data_key;
+
+        ## Full signature = SHA256 ( HeadKey + HeadSignature + DataKey + DataSignature )
+        $signature = self::hash($hk . $this->head_signature . $dk . $this->data_signature );
+
+         if(strcmp($signature,$this->full_signature) == 0)
+             return $data;
+        else
+            return false;
     }
 
     private function decodeHead($head){
@@ -118,6 +130,9 @@ class JsonAtp {
         if($head === false)
             return false;
 
+        ## Set head signature ##
+        $this->head_signature = self::hash($head);
+
         ## Json decode to array ##
         $head = json_decode($head,true);
 
@@ -126,19 +141,16 @@ class JsonAtp {
 
         ## FIND SOME INFO ##
         ## GET CIPHER IF EXIST ##
-        if(isset($head['cipher']))
-            self::setCipher($head['cipher']);
+        if(isset($head[self::HEAD_FIELD_CIPHER]))
+            self::setCipher($head[self::HEAD_FIELD_CIPHER]);
 
         ## Token ##
-        if(isset($head['token']))
-            self::setToken($head['token']);
+        if(isset($head[self::HEAD_FIELD_TOKEN]))
+            self::setToken($head[self::HEAD_FIELD_TOKEN]);
 
         ## Protocol version match ##
-        if(!isset($head['protocol']) && intval($head['protocol']) != self::ATP_PROTOCOL)
+        if(!isset($head[self::HEAD_FIELD_PROTOCOL]) && intval($head[self::HEAD_FIELD_PROTOCOL]) != self::ATP_PROTOCOL)
             return false;
-
-        ## Set data signature ##
-        $this->data_signature = $head['signature'];
 
         return $head;
     }
@@ -146,6 +158,7 @@ class JsonAtp {
     private function decodeData($data){
         ## Base64 decode ##
         $data = base64_decode($data);
+
         if($data === false)
             return false;
 
@@ -160,9 +173,7 @@ class JsonAtp {
             return false;
 
         ## Test signatrue ##
-        $signature = base64_encode(hex2bin(hash('sha256',$this->head_key . $data . $this->data_key)));
-        if(strcmp($signature,$this->data_signature) != 0)
-            return false;
+        $this->data_signature = self::hash($data);
 
         return $data;
     }
@@ -170,7 +181,7 @@ class JsonAtp {
     public function encode($data, $extra = null){
 
         ## Data check ##
-        if(is_string($data) == false && strlen($data) <= 2)
+        if(is_string($data) == false || strlen($data) <= 2)
             return false;
 
         ## Add extra fields to head ##
@@ -319,6 +330,19 @@ class JsonAtp {
         return ($this->flag & self::FLAG_ENCRYPTION) > 0 ? true : false;
     }
 
+    public function getExtra(){
+        $_ARR = false;
+
+        if(is_array($this->head)){
+            foreach($this->head as $key => $val)
+                if(substr_compare($key,'_',0,1,true) != 0)
+                    $_ARR[$key] = $val;
+
+        }
+
+        return $_ARR;
+    }
+
     public function addExtra($extra){
         if(is_array($extra)){
 
@@ -332,41 +356,12 @@ class JsonAtp {
             return false;
     }
 
-//    public function parseHead($data){
-//        if(is_string($data)){
-//            ## Check data ##
-//            if(is_string($data) == false)
-//                return false;
-//
-//            if(strlen($data) < 2)
-//                return false;
-//
-//            ## Check encrypt key ##
-//            if(self::useEncryption() && ($this->head_key == null))
-//                return false;
-//
-//            ## Get header ##
-//            ## Header length ##
-//            $this->head_length  = hexdec(substr($data,0,4));
-//            $this->flag         = hexdec(substr($data,4,1));
-//
-//            $this->head = substr($data,5,$this->head_length);
-//
-//            $this->head = self::decodeHead($this->head);
-//
-//            if($this->head === false)
-//                return false;
-//        }
-//
-//        return true;
-//    }
-
     public function getToken(){
         return $this->token;
     }
 
     public function setToken($token){
-        $this->token = $token;
+        $this->token = strval($token);
     }
 
     /**
@@ -419,7 +414,7 @@ class JsonAtp {
 
     private function hash($data){
         if(is_string($data) && strlen($data)>1){
-            return base64_encode(hex2bin(hash('sha256', $data)));
+            return base64_encode(hex2bin(hash(self::HASH_ALGORITHM, $data)));
         }
 
         return false;
