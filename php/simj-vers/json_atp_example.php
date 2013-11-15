@@ -3,28 +3,41 @@
 
 require_once('json_atp.php');
 
-$head_key = 'super-key-for-server1';
-$data_key = 'data-mega-key1';
+## Server key for HEAD ##
+$head_key = 'super-key-for-server';
 
-$jsonatp = new JsonAtp(562);
+## Data key ##
+$data_key = 'secret-key-for-client-1';
 
-var_dump($jsonatp);
+## Create client-1 instance to transfer message to server ##
+$encode = new JsonAtp('client-1',$head_key,$data_key);
 
+## Secret message ##
 $data = 'Super Secret Message';
 
-//$jsonatp->addExtra();
+## Encode date ##
+$edata = $encode->encode($data);
 
-$edata = $jsonatp->encode($data);
-var_dump($jsonatp);
+## Show coder status ##
+var_dump($encode);
+
+## Show message ##
 var_dump($edata);
 
-$ddata = $jsonatp->decode($edata,true);
-var_dump($jsonatp);
-var_dump($ddata);
-var_dump($jsonatp->getExtra());
 
-$ddata = $jsonatp->decode($edata);
-var_dump($jsonatp);
-var_dump($ddata);
+## Create Decode instance, Without token (for Server)
+$decode = new JsonAtp(null,$head_key);
+$client_token = $decode->decode($edata,true);
 
-$jjj = new JsonAtp($head_key);
+## Show client token ##
+var_dump($client_token);
+
+## Search in Client DB for data key for this client ##
+$client_key = 'secret-key-for-client-1';
+$decode->setDataKey($client_key);
+
+## Decode message ##
+$message = $decode->decode($edata);
+
+## Show message ##
+var_dump($message);

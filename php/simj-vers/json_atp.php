@@ -11,6 +11,7 @@
 
 class JsonAtp {
     const ATP_PROTOCOL      = 3;
+
     const FLAG_CLEAR_TEXT   = 0x0;
     const FLAG_COMPRESSION  = 0x1;
     const FLAG_ENCRYPTION   = 0x2;
@@ -386,6 +387,11 @@ class JsonAtp {
         ## If head key == null, no encryption at all ##
         if(is_null($this->head_key))
             $this->flag &= (self::FLAG_ENCRYPTION ^ 0xFF);
+    }
+
+    public function setDataKey($key){
+        if(is_string($key))
+            $this->data_key = $key;
     }
 
     /**
